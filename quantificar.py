@@ -17,13 +17,16 @@ __status__ = "Desenvolvimento"
 
 
 def quantificar_subida_encosta(**kwargs):
-    """
-    Funcao que inicializa estruturas de dados e invoca algoritmo de busca local
-    por subida de encosta.
-    """
-    ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
-    #buscas.subida_encosta(problema)
-    raise NotImplementedError
+    melhor_atual = ProblemaQuantificacao(kwargs['cores'], kwargs['pixels'])
+    while True:
+        adjacentes = melhor_atual.adjacentes
+        melhor_adjacente = min(adjacentes, key=lambda estado: estado.avaliacao)
+        
+        if melhor_adjacente.avaliacao < melhor_atual.avaliacao:
+            melhor_atual = melhor_adjacente
+        else:
+            return melhor_atual
+
 
 def quantificar_feixe_local(**kwargs):
     """
