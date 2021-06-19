@@ -2,37 +2,36 @@
 
 """Quantificador de cores de imagens utilizando algoritmos de busca local"""
 
-import sys, buscas
-from problemas import ProblemaQuantificacao
-from PIL import Image
-
-__author__ = "Nome do aluno"
+__author__ = "Lucas Nakahara e Gabriel Rodrigues"
 __copyright__ = "Copyleft"
 __credits__ = ["Ricardo Inácio Álvares e Silva"]
 __license__ = "GPLv3"
 __version__ = "1.0"
-__maintainer__ = "Ricardo Inácio Álvares e Silva"
-__email__ = "ricardo.silva@unifil.br"
+__maintainer__ = "Lucas Nakahara e Gabriel Rodrigues"
 __status__ = "Desenvolvimento"
 
+import sys, buscas
+from problemas import ProblemaQuantificacao
+from PIL import Image
 
 def quantificar_subida_encosta(**kwargs):
     """
     Funcao que inicializa estruturas de dados e invoca algoritmo de busca local
     por subida de encosta.
     """
-    ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
-    buscas.subida_encosta(ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')))
+    cores = kwargs.get('cores')
+    imagem = kwargs.get('reduzida')
+    buscas.subida_encosta(ProblemaQuantificacao.paleta_inicial(cores, imagem))
 
 def quantificar_feixe_local(**kwargs):
     """
     Funcao que inicializa estruturas de dados e invoca algoritmo de busca em
     feixe local.
     """
-    ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
-    
+    cores = kwargs.get('cores')
+    imagem = kwargs.get('reduzida')
     k = kwargs.get('argumento')
-    problema = [ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')) for _ in range(k)]
+    problema = [ProblemaQuantificacao.paleta_inicial(cores, imagem) for _ in range(k)]
     buscas.feixe_local(problema=problema, k=k)
     
 def quantificar_geneticamente(**kwargs):
@@ -40,11 +39,20 @@ def quantificar_geneticamente(**kwargs):
     Funcao que inicializa estruturas de dados e invoca algoritmo de busca local
     por por algoritmo genético.
     """
-    ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
-    #buscas.busca_genetica(populacao, fitness)
+    cores = kwargs.get('cores')
+    imagem = kwargs.get('reduzida')
     k = kwargs.get('argumento')
-    populacao = [ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')) for _ in range(k)]
+    populacao = [ProblemaQuantificacao.paleta_inicial(cores, imagem) for _ in range(k)]
     buscas.busca_genetica(populacao=populacao)
+
+def quantificar_kmedias(**kwargs):
+    """
+    Funcao que inicializa estruturas de dados e invoca algoritmo de busca k-médias
+    """
+    cores = kwargs.get('cores')
+    img = kwargs.get('reduzida')
+    tamanho = (img.width, img.height)
+    buscas.kmedias(ProblemaQuantificacao(cores, None, img.load(), tamanho))
 
 if __name__ == "__main__":
     # Leitura e verificacao dos argumentos de linha de comando
@@ -61,20 +69,24 @@ if __name__ == "__main__":
     cores = int(sys.argv[3])
     nome_arquivo = sys.argv[4]
 
-
     # Define algoritmo a ser aplicado
     if algoritmo == "subida":
+        print(f"Inicializando algoritmo: subida de encosta.")
         algoritmo = quantificar_subida_encosta
     elif algoritmo == "feixe":
+        print(f"Inicializando algoritmo: feixe local.")
         algoritmo = quantificar_feixe_local
     elif algoritmo == "genetico":
+        print(f"Inicializando algoritmo: genético.")
         algoritmo = quantificar_geneticamente
+    elif algoritmo == "kmedias":
+        print(f"Inicializando algoritmo: k-médias.")
+        algoritmo = quantificar_kmedias
     else:
         print("Algoritmo especificado inválido: {0}".format(algoritmo))
-        print("Algoritmos válidos são: {0}, {1}, {2}"
-              .format("subida", "feixe", "genetico"))
+        print("Algoritmos válidos são: {0}, {1}, {2}, {3}"
+              .format("subida", "feixe", "genetico", "kmedias"))
         exit()
-        
     
     if cores < 1:
         print("Quantidade de cores pós-quantizacão deve ser no mínimo 1.")
@@ -85,25 +97,15 @@ if __name__ == "__main__":
         original = Image.open(nome_arquivo)
     except IOError as err:
         print("Erro ao acessar arquivo: {0}".format(err))
-    
-    # print(original.width)
-    # print(original.height)
 
     # Copiar imagem para poder comparar ambas ao final.    
     reduzida = original.copy()
-    
-    # Obtendo acesso aos pixels da cópia. Cada posicao é uma tupla (R, G, B)
-    # R, G e B tem domínio em [0,255], ou seja, 0 <= x <= 255
-    # pixels = reduzida.load()
 
-
-    algoritmo(argumento=argumento, cores=cores, pixels=reduzida)
+    algoritmo(argumento=argumento, cores=cores, reduzida=reduzida)
     
     original.show()
     reduzida.show()
-    reduzida.save(nome_arquivo.split(".")[0] + ".png")
-    
+    reduzida.save(nome_arquivo.split(".")[0] + "-quantified.png")
     exit()
-
 else:
     raise ImportError("Este módulo só pode funcionar como o principal.")
