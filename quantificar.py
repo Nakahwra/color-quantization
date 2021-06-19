@@ -17,16 +17,12 @@ __status__ = "Desenvolvimento"
 
 
 def quantificar_subida_encosta(**kwargs):
-    melhor_atual = ProblemaQuantificacao(kwargs['cores'], kwargs['pixels'])
-    while True:
-        adjacentes = melhor_atual.adjacentes
-        melhor_adjacente = min(adjacentes, key=lambda estado: estado.avaliacao)
-        
-        if melhor_adjacente.avaliacao < melhor_atual.avaliacao:
-            melhor_atual = melhor_adjacente
-        else:
-            return melhor_atual
-
+    """
+    Funcao que inicializa estruturas de dados e invoca algoritmo de busca local
+    por subida de encosta.
+    """
+    ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
+    buscas.subida_encosta(ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')))
 
 def quantificar_feixe_local(**kwargs):
     """
@@ -34,9 +30,11 @@ def quantificar_feixe_local(**kwargs):
     feixe local.
     """
     ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
-    #buscas.feixe_local(problema, k)
-    raise NotImplementedError
-
+    
+    k = kwargs.get('argumento')
+    problema = [ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')) for _ in range(k)]
+    buscas.feixe_local(problema=problema, k=k)
+    
 def quantificar_geneticamente(**kwargs):
     """
     Funcao que inicializa estruturas de dados e invoca algoritmo de busca local
@@ -44,8 +42,9 @@ def quantificar_geneticamente(**kwargs):
     """
     ### Após iniciar estruturas de dados, remova o comentario da linha abaixo
     #buscas.busca_genetica(populacao, fitness)
-    raise NotImplementedError
-    
+    k = kwargs.get('argumento')
+    populacao = [ProblemaQuantificacao.paleta_inicial(qtd_cores=kwargs.get('cores'), img=kwargs.get('pixels')) for _ in range(k)]
+    buscas.busca_genetica(populacao=populacao)
 
 if __name__ == "__main__":
     # Leitura e verificacao dos argumentos de linha de comando
@@ -87,15 +86,18 @@ if __name__ == "__main__":
     except IOError as err:
         print("Erro ao acessar arquivo: {0}".format(err))
     
+    # print(original.width)
+    # print(original.height)
+
     # Copiar imagem para poder comparar ambas ao final.    
     reduzida = original.copy()
     
     # Obtendo acesso aos pixels da cópia. Cada posicao é uma tupla (R, G, B)
     # R, G e B tem domínio em [0,255], ou seja, 0 <= x <= 255
-    pixels = reduzida.load()
+    # pixels = reduzida.load()
 
 
-    algoritmo(argumento=argumento, cores=cores, pixels=pixels)
+    algoritmo(argumento=argumento, cores=cores, pixels=reduzida)
     
     original.show()
     reduzida.show()

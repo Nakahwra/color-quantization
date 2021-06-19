@@ -14,6 +14,7 @@ __status__ = "Desenvolvimento"
 from math import sqrt
 from random import random
 from PIL.Image import Image
+from copy import deepcopy
 
 from dataclasses import dataclass
 from typing import List, Tuple
@@ -42,48 +43,68 @@ class ProblemaQuantificacao(ProblemaLocal):
     qtd_cores: int
     paleta: List[Tuple]
     imagem: List[Tuple]
+    tamanho: Tuple
     
     @classmethod
-    def paleta_inicial(cls, qtd_cores, imagem):
+    def paleta_inicial(cls, qtd_cores, img):
         paleta = [tuple(int(random()*256) for _ in range(3)) for _ in range(qtd_cores)]
-        return cls(qtd_cores, paleta, imagem)
+        imagem = img.load()
+        tamanho = (img.width, img.height)
+        return cls(qtd_cores, paleta, imagem, tamanho)
 
     @property
     def heuristica(self):
+        # print(random())
         cores = self.paleta
-        imagem = self.imagem
+        largura, altura = self.tamanho
+
+        hist = {}
+        for i in range(largura):
+            for j in range(altura):
+                hist[self.imagem[i,j]] = hist.get(self.imagem[i,j], 0) + 1
 
         valor_h = 0
-        for linha in range(imagem.width):
-            for coluna in range(imagem.height):
+        for linha in range(largura):
+            for coluna in range(altura):
                 for cor in cores:
                     cr, cg, cb = cor
-                    ir, ig, ib = imagem[linha, coluna]
-                    dist_euclid = sqrt((ir-cr)**2 + (ig-cg)**2 + (ib-cb)**2)
+                    ir, ig, ib = self.imagem[linha, coluna]
+                    # dist_euclid = sqrt((ir-cr)**2 + (ig-cg)**2 + (ib-cb)**2)
+                    dist_euclid = abs(ir-cr) + abs(ig-cg) + abs(ib-cb)
                     valor_h += dist_euclid
         return valor_h
+
+        # valor_h = 0
+        # for cor in cores:
+        #     for pixel in hist:
+        #         dist_euclid = abs(pixel[0]-cor[0]) + abs(pixel[1]-cor[1]) + abs(pixel[2]-cor[2])
+        #         valor_h += dist_euclid       
+        # return valor_h
     
     @property
     def acoes(self):
-
-        # paleta = [(),(),()] i=0
-        # tupla_cor = (1,2,3) i=0
-        # cor = 1
-        # variacao [0] ~ 255
-            # if 0 != 1:
-                # nova_tupla_cor = (0,2,3)
-                # nova_paleta = [(0,2,3),(),()]
-
+        adjacentes = list()
         for i, tupla_cor in enumerate(self.paleta):
             for j, cor in enumerate(tupla_cor):
-                for variacao in range(255):
-                    nova_paleta = self.paleta
-                    nova_tupla_cor = tupla_cor
+                for variacao in range(2):
+                    print(f"tupla:{i} - cor:{j} - variacao:{variacao+1}")
+                    nova_paleta = deepcopy(self.paleta)
+                    nova_tupla_cor = list(deepcopy(tupla_cor))
+                    nova_cor = deepcopy(cor)
 
-                    if variacao != cor:
-                        nova_tupla_cor[j] = variacao
-                        nova_paleta[i] = nova_tupla_cor
-                        yield ProblemaQuantificacao(self.qtd_cores, nova_paleta, self.imagem)
+                    nova_cor = (nova_cor + (variacao + 1)) if nova_cor < 255 else (nova_cor + (variacao + 1)) - 255
+                    # print(f"cor: {cor} - nova_cor: {nova_cor}")
+
+                    nova_tupla_cor[j] = nova_cor
+                    # print(f"tupla_cor: {tupla_cor} - nova_tupla_cor: {nova_tupla_cor}")
+
+                    nova_paleta[i] = tuple(nova_tupla_cor)
+                    # print(f"paleta: {self.paleta} - nova_paleta: {nova_paleta}")
+
+                    # adjacente = self.adjacente(nova_paleta)
+                    adjacentes.append(ProblemaQuantificacao(self.qtd_cores, nova_paleta, self.imagem, self.tamanho))
+        
+        return adjacentes
 
 if __name__ == "__main__":
     print("Este módulo não deve ser utilizado como o principal ou inicial")
